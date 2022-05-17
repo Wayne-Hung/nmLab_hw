@@ -1,6 +1,36 @@
 import cv2
 import multiprocessing as mp
 
+import mediapipe
+
+mp_hands = mediapipe.solutions.hands
+mp_drawing_styles = mediapipe.solutions.drawing_styles
+mp_drawing = mediapipe.solutions.drawing_utils
+
+mp_face_detection = mediapipe.solutions.face_detection
+mp_drawing = mediapipe.solutions.drawing_utils
+
+mp_object_detection = mediapipe.solutions.object_detection
+mp_drawing = mediapipe.solutions.drawing_utils
+
+def hand(image):
+
+    with mp_hands.Hands(
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5) as hands:
+
+        results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        if results.multi_hand_landmarks:
+            for hand_landmarks in results.multi_hand_landmarks:
+                mp_drawing.draw_landmarks(
+                image,
+                hand_landmarks,
+                mp_hands.HAND_CONNECTIONS,
+                mp_drawing_styles.get_default_hand_landmarks_style(),
+                mp_drawing_styles.get_default_hand_connections_style())
+
+    return image
+
 def gstreamer_camera(queue):
     # Use the provided pipeline to construct the video capture in opencv
     pipeline = (
@@ -51,14 +81,16 @@ def gstreamer_rtmpstream(queue):
         'rtmpsink location="rtmp://localhost/rtmp/live live=1"'
     )
 
+
     out = cv2.VideoWriter(pipeline, cv2.CAP_GSTREAMER, 30.0, (1920, 1080))
     try:
         while True:
             if not queue.empty():
                 # print('consumer')
                 f = queue.get()
-                f = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)
-                f = cv2.cvtColor(f, cv2.COLOR_GRAY2BGR)
+                # f = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)
+                # f = cv2.cvtColor(f, cv2.COLOR_GRAY2BGR)
+                f = hand(f)
                 out.write(f)
     except KeyboardInterrupt as e:
         # cap.release()
