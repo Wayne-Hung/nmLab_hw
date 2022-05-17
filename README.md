@@ -1,5 +1,5 @@
 # nmLab_hw
-Server (Jetson Nano) send streaming video tp client (laptop), and user can send control signal to the server through gRPC.
+Server (Jetson Nano) send streaming video to client (laptop), and user can send control signal to the server through gRPC.
 
 ## Install Dependencies
 ### Install gRPC Dependencies
@@ -46,7 +46,7 @@ $ python3 client.py --ip [server ip] --port [server port]
 ```
 For example:
 ``` bash
-$ python3 server.py --ip 192.168.55.1 --port 8888
+$ python3 client.py --ip 192.168.55.1 --port 8888
 ```
 
 ## Display mode
