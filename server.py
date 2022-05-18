@@ -32,9 +32,13 @@ def face(image):
     with mp_face_detection.FaceDetection(
         min_detection_confidence=0.5) as face_detection:
         results = face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        if results.detections != None:
-            for detection in results.detections:
-                mp_drawing.draw_detection(image, detection)
+
+    return results
+
+def drawFace(image, results):
+    if results.detections != None:
+        for detection in results.detections:
+            mp_drawing.draw_detection(image, detection)
     
     # return image
 
@@ -44,28 +48,37 @@ def hand(image):
         min_tracking_confidence=0.5) as hands:
 
         results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
-                mp_drawing.draw_landmarks(
-                image,
-                hand_landmarks,
-                mp_hands.HAND_CONNECTIONS,
-                mp_drawing_styles.get_default_hand_landmarks_style(),
-                mp_drawing_styles.get_default_hand_connections_style())
+    
+    return results
 
     # return image
 
-def object(image):
+def drawHand(image, results):
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks:
+            mp_drawing.draw_landmarks(
+            image,
+            hand_landmarks,
+            mp_hands.HAND_CONNECTIONS,
+            mp_drawing_styles.get_default_hand_landmarks_style(),
+            mp_drawing_styles.get_default_hand_connections_style())
+
+
+def object_detect(image):
     with mp_object_detection.ObjectDetection(
         min_detection_confidence=0.1) as object_detection:
 
         results = object_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-
-        if results.detections:
-            for detection in results.detections:
-                mp_drawing.draw_detection(image, detection)
+    
+    return results
 
     # return image
+
+def drawObject(image, results):
+    if results.detections:
+        for detection in results.detections:
+            mp_drawing.draw_detection(image, detection)
+
 
 
 def gstreamer_camera(queue):
@@ -119,18 +132,36 @@ def gstreamer_rtmpstream(queue, mode):
 
     out = cv2.VideoWriter(pipeline, cv2.CAP_GSTREAMER, 30.0, (1920, 1080))
     try:
+        results = lambda: None
+        results.detections = None
+        results.multi_hand_landmarks = None
+        interval = 3
+        t = 0
         while True:
             if not queue.empty():
                 # print('consumer')
                 f = queue.get()
-                if mode.value != 0:
-                    print("mode is", mode.value)
+                if t % interval == 0:
+                    if mode.value == 1:
+                        results = face(f)
+                        results.multi_hand_landmarks = None
+                    elif mode.value == 2:
+                        results = hand(f)
+                        results.detections = None
+                    elif mode.value == 3:
+                        results = object_detect(f)
+                        results.multi_hand_landmarks = None
+                t = t + 1
+
+                # if mode.value != 0:
+                #     print("mode is", mode.value)
+
                 if mode.value == 1:
-                    face(f)
+                    drawFace(f, results)
                 elif mode.value == 2:
-                    hand(f)
+                    drawHand(f, results)
                 elif mode.value == 3:
-                    object(f)
+                    drawObject(f, results)
                     
                 out.write(f)
     except KeyboardInterrupt as e:
