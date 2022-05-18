@@ -53,6 +53,7 @@ $ python3 client.py --ip 192.168.55.1 --port 8888
 - 1: Face detection.
 - 2: Hand detection.
 - 3: Object detection.
+- 4: Pose detection.
 
 ## Demo video
 [Youtube link](TODO)
