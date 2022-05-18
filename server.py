@@ -135,7 +135,7 @@ def gstreamer_rtmpstream(queue, mode):
         results = lambda: None
         results.detections = None
         results.multi_hand_landmarks = None
-        interval = 3
+        interval = 7
         t = 0
         while True:
             if not queue.empty():
