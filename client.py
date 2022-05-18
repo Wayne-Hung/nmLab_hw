@@ -31,10 +31,10 @@ try:
         request = fib_pb2.FibRequest()
 
         while True:
-            mode = input("0: Original, 1: Face Detect, 2: Hand Detect, 3: Object Detect, e:Exit.")
+            mode = input("0: Original, 1: Face Detect, 2: Hand Detect, 3: Object Detect, 4: Pose Detect, e:Exit.")
             if mode.lower() == "e":
                 break
-            elif mode in ["0", "1", "2", "3"]:
+            elif mode in ["0", "1", "2", "3", "4"]:
                 request.order = int(mode)
                 response = stub.Compute(request)
                 print(response.value)

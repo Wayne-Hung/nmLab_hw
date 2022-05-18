@@ -1,5 +1,6 @@
 import os
 import os.path as osp
+from platform import node
 import sys
 BUILD_DIR = osp.join(osp.dirname(osp.abspath(__file__)), "build/service/")
 sys.path.insert(0, BUILD_DIR)
@@ -25,6 +26,8 @@ mp_face_detection = mediapipe.solutions.face_detection
 mp_object_detection = mediapipe.solutions.object_detection
 
 mp_drawing = mediapipe.solutions.drawing_utils
+
+mp_pose = mediapipe.solutions.pose
 
 
 # return or pass by reference?
@@ -78,6 +81,24 @@ def drawObject(image, results):
     if results.detections:
         for detection in results.detections:
             mp_drawing.draw_detection(image, detection)
+
+def pose_detect(image):
+
+    with mp_pose.Pose(
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5) as pose:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        results = pose.process(image)
+
+    return results
+
+def drawPose(image, results):
+    if results.pose_landmarks:
+        mp_drawing.draw_landmarks(
+            image,
+            results.pose_landmarks,
+            mp_pose.POSE_CONNECTIONS,
+            landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
 
 
 
@@ -135,6 +156,7 @@ def gstreamer_rtmpstream(queue, mode):
         results = lambda: None
         results.detections = None
         results.multi_hand_landmarks = None
+        results.pose_landmarks = None
         interval = 7
         t = 0
         while True:
@@ -145,11 +167,18 @@ def gstreamer_rtmpstream(queue, mode):
                     if mode.value == 1:
                         results = face(f)
                         results.multi_hand_landmarks = None
+                        results.pose_landmarks = None
                     elif mode.value == 2:
                         results = hand(f)
                         results.detections = None
+                        results.pose_landmarks = None
                     elif mode.value == 3:
                         results = object_detect(f)
+                        results.multi_hand_landmarks = None
+                        results.pose_landmarks = None
+                    elif mode.value == 4:
+                        results = pose_detect(f)
+                        results.detections = None
                         results.multi_hand_landmarks = None
                 t = t + 1
 
@@ -162,6 +191,8 @@ def gstreamer_rtmpstream(queue, mode):
                     drawHand(f, results)
                 elif mode.value == 3:
                     drawObject(f, results)
+                elif mode.value == 4:
+                    drawPose(f, results)
                     
                 out.write(f)
     except KeyboardInterrupt as e:
@@ -186,7 +217,7 @@ class StreamServer(fib_pb2_grpc.FibCalculatorServicer):
         response = fib_pb2.FibResponse()
         response.value = value
 
-        if value in [0, 1, 2, 3]:
+        if value in [0, 1, 2, 3, 4]:
             print("Change mode")
             self.mode.value= int(value)
 
