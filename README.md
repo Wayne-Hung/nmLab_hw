@@ -56,4 +56,4 @@ $ python3 client.py --ip 192.168.55.1 --port 8888
 - 4: Pose detection.
 
 ## Demo video
-[Youtube link](TODO)
+[Youtube link](https://youtu.be/qf8XNaoVQhU)
